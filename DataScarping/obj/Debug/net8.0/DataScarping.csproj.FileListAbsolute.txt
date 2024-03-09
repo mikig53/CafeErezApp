@@ -1,0 +1,15 @@
+D:\source\repos\MauiWinnerApp\DataScarping\obj\Debug\net8.0\DataScarping.GeneratedMSBuildEditorConfig.editorconfig
+D:\source\repos\MauiWinnerApp\DataScarping\obj\Debug\net8.0\DataScarping.AssemblyInfoInputs.cache
+D:\source\repos\MauiWinnerApp\DataScarping\obj\Debug\net8.0\DataScarping.AssemblyInfo.cs
+D:\source\repos\MauiWinnerApp\DataScarping\obj\Debug\net8.0\DataScarping.csproj.CoreCompileInputs.cache
+D:\source\repos\MauiWinnerApp\DataScarping\obj\Debug\net8.0\DataScarping.csproj.AssemblyReference.cache
+D:\source\repos\MauiWinnerApp\DataScarping\bin\Debug\net8.0\DataScarping.deps.json
+D:\source\repos\MauiWinnerApp\DataScarping\bin\Debug\net8.0\DataScarping.dll
+D:\source\repos\MauiWinnerApp\DataScarping\bin\Debug\net8.0\DataScarping.pdb
+D:\source\repos\MauiWinnerApp\DataScarping\bin\Debug\net8.0\BetModels.dll
+D:\source\repos\MauiWinnerApp\DataScarping\bin\Debug\net8.0\BetModels.pdb
+D:\source\repos\MauiWinnerApp\DataScarping\obj\Debug\net8.0\DataScarping.dll
+D:\source\repos\MauiWinnerApp\DataScarping\obj\Debug\net8.0\refint\DataScarping.dll
+D:\source\repos\MauiWinnerApp\DataScarping\obj\Debug\net8.0\DataScarping.pdb
+D:\source\repos\MauiWinnerApp\DataScarping\obj\Debug\net8.0\ref\DataScarping.dll
+D:\source\repos\MauiWinnerApp\DataScarping\obj\Debug\net8.0\DataScar.EB9CBBAD.Up2Date
