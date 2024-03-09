@@ -1,0 +1,476 @@
+﻿
+@using BetModels.Models;
+@using BetModels.Interfaces;
+
+@using MudBlazor
+@using RazorClassLibraryModels.Models;
+@using System.Text.RegularExpressions;
+
+<link href="LoadingStyleSheet.css" rel="stylesheet" />
+@if (myShow)
+{
+    <p></p>
+    <MudStack Row="true">
+        <MudIconButton Icon="@Icons.Material.Filled.ShoppingBasket" OnClick="@ChangeMyShow"
+                               Disabled="@(!(count_T>2 || count_D==2 || count_S==2 || (count_S==1 && count_T==1)))"
+                               Color="Color.Info" Size="Size.Medium" Title="@MyList.Count().ToString()" />
+                <MudText Style="font-size:larger"> @MyList.Count().ToString()</MudText>
+                <MudText Style="font-size:small">הטופס שלי</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Refresh" OnClick="@RefreshData"
+                               Color="Color.Info" Size="Size.Medium" Title="Refresh data" />
+                <MudTextField Style="font-size:small" @bind-Value="searchString1" Placeholder="חפש" TextChanged="@Search"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Small" Class="mt-0"></MudTextField>
+    </MudStack>
+     <p></p>
+       @if (DebtList.Count==0)
+    {
+        <MudStack Row="true">
+            <div class="ball"></div>
+            <div class="ball" style="--c: lightblue;--s:120px"></div>
+            <div class="ball" style="--c: yellow;--s:120px"></div>
+        </MudStack>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-12 text-center">
+                    <h3 class="animate-charcter">....טוען נתונים</h3>
+                </div>
+            </div>
+        </div>
+
+        
+      
+    }
+   
+        
+    <MudGrid class="table-container">
+     
+        <MudTable Items="@DebtList" class="content-area" Loading="@(DebtList.Count==0)" Filter="new Func<TelesportCategory,bool>(FilterFunc1)">
+           
+                    
+               
+            <RowTemplate>
+                <MudGrid>
+                    <MudItem xs="12">
+                        <MudTd Style="color:ghostwhite; background-color:darkslateblue; line-height: 0em; overflow: hidden; font-size:smaller">@context.Name<MudImage Src=@context.ImgFlag Width="20" Height="15"alt=""/></MudTd>
+                        <MudTable Items="@context.Tags" Striped="false">
+                            <RowTemplate Context="tag">
+                                @if (found || (!found && (tag.Description.Contains(searchString1) || (tag.Description2 != null && tag.Description2.Contains(searchString1) || (tag.Note != null && tag.Note.Contains(searchString1))))))
+                                {
+                                <MudTd Style="line-height: 0em; overflow: hidden; border-bottom-color:brown; border-spacing: 1px; background-color:snow;">
+                                    <MudGrid>
+                                        <MudItem xs="12"> 
+                                            <MudText Style="color:blue; text-align:right; line-height: 0em;font-size:xx-small">משחק</MudText>
+                                        
+                                        <MudGrid  Style="font-size:x-small">
+                                            <MudItem xs="6">
+                                                <MudText Style="font-size:x-small; text-align:left; color:red">@tag.Type</MudText>
+                                            </MudItem>
+                                            <MudItem xs="6">
+                                                <MudText Style="color:blue; text-align:right; font-size:medium">
+                                                        @FormatNumber(tag.Number)
+                                                    </MudText>
+                                            </MudItem>
+
+                                        </MudGrid>
+                                      
+                                            <MudText Style="color:darkblue; text-align:right; font-size:x-small">@tag.Description</MudText>
+                                            <MudText Style="font-size:x-small;text-align:center;color:green">@tag.Score</MudText>
+                                            <MudButton Variant="Variant.Filled"
+                                                           OnClick="@(() => HandleButtonClick(1, context, tag, tag.Bet2.Data1X2))"
+                                                           Style="@GetButtonColor(1, context, tag)" Size="Size.Small"
+                                                           Disabled="@(string.IsNullOrEmpty(tag.Bet2.Data1X2))">
+                                                    @tag.Bet2.Data1X2
+                                            </MudButton>
+                                                <MudAvatar Style="height:20px; width:10px; font-size:xx-small" Color="Color.Primary">2</MudAvatar>
+                                                &emsp;&emsp;
+
+                                                @if (tag.BetX.Data1X2 != "")
+                                                {
+                                                    <MudButton Variant="Variant.Filled"
+                                                               OnClick="@(() => HandleButtonClick(0, context, tag, tag.BetX.Data1X2))"
+                                                               Style="@GetButtonColor(0, context, tag)" Size="Size.Small"
+                                                               Disabled="@(string.IsNullOrEmpty(tag.BetX.Data1X2))">
+                                                        @tag.BetX.Data1X2
+                                                    </MudButton>
+                                                    <MudAvatar Style="height:20px; width:10px; font-size:xx-small" Color="Color.Primary">X</MudAvatar>
+                                                    
+                                                }
+                                                &emsp; &emsp;
+                                                <MudButton Variant="Variant.Filled"
+                                                           OnClick="@(() => HandleButtonClick(2, context, tag, tag.Bet1.Data1X2))"
+                                                           Style="@GetButtonColor(2, context, tag)" Size="Size.Small"
+                                                           Disabled="@(string.IsNullOrEmpty(tag.Bet1.Data1X2))">@tag.Bet1.Data1X2</MudButton>
+                                               <MudAvatar Style="height:20px; width:10px; font-size:xx-small" Color="Color.Primary">1</MudAvatar>
+                                                &emsp;&emsp;
+                                            
+                                                
+                                            </MudItem>
+                                           
+                                        
+                                       <MudGrid Style="font-size:x-small">
+                                            <MudItem xs="6">
+                                                <MudText Style="color:darkblue; text-align:right;color:green; font-size:x-small">@tag.Note</MudText>
+                                            </MudItem>
+                                                <MudItem xs="6">
+                                                <MudText Style="color:darkblue; text-align:right; font-size:x-small">@tag.Description2&nbsp;&nbsp;&emsp; </MudText>
+                                                &emsp; &emsp;
+                                                <MudText Style="font-size:x-small;text-align:right;color:mediumvioletred">@tag.Status</MudText>
+                                             </MudItem>
+                                         </MudGrid>
+                                    </MudGrid>
+                                </MudTd>
+                                }
+                                
+                            </RowTemplate>
+                        </MudTable>
+                    </MudItem>
+
+                </MudGrid>
+            </RowTemplate>
+        </MudTable>
+    </MudGrid>
+   
+}
+else
+{
+    <TelesportBetsForm MyList="@MyList" ActiveIndexes="DebtList" OnReturn="@HandleReturn" />
+}
+
+<style>
+    .table-container {
+        height: calc(100vh - 56px); /* Replace with the height of your MudTabs component */
+        overflow-y: auto;
+        overflow-x: auto; /* add horizontal scrolling */
+    }
+
+        .table-container::-webkit-scrollbar {
+            display: none;
+        }
+
+    .content-area {
+        overflow-x: auto;
+        margin-bottom: 16px; /* Add some bottom margin to create a gap between the content area and the tabs */
+    }
+
+  .spinner {
+        border: 4px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top: 4px solid #3498db;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
+</style>
+
+@code {
+    [Parameter]
+    public MudTabPanel ActivePanel { get; set; }
+    [Parameter]
+    public List<TelesportCategory> DebtList { get; set; }
+    [Parameter] public EventCallback OnRefresh { get; set; }
+    [Parameter] public EventCallback<bool> OnMyShowChanged { get; set; }
+    bool myShow = true;
+
+    public string GameNo { get; set; }
+    public string BetRatio { get; set; }
+    public string Bet1X2 { get; set; }
+    public string Game { get; set; }
+    public string Game2 { get; set; }
+    public string Info { get; set; }
+    public string Type { get; set; }
+
+    private int count_S = 0;
+    private int count_D = 0;
+    private int count_T = 0;// total bets
+    public List<BetList> MyList = new();
+    private string searchString1 = "";
+    private bool found;
+    private bool FilterFunc1(TelesportCategory element) => FilterFunc(element, searchString1);
+    private bool FilterFunc(TelesportCategory element, string searchString)
+    {
+       // found = false;
+        if (string.IsNullOrWhiteSpace(searchString))
+        {
+            found = true;
+            return true;
+        }
+        
+
+        if (element.Name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+        {
+            found = true;
+            return true;
+        }
+
+        if (element.Tags.Any(tag => tag.Description.Contains(searchString)))
+        
+            return true;
+
+        if (element.Tags.Any(tag => tag.Description2 != null && tag.Description2.Contains(searchString)))
+
+            return true;
+        if (element.Tags.Any(tag => tag.Note != null && tag.Note.Contains(searchString)))
+
+            return true;
+
+        return false;
+    }
+    private MarkupString FormatNumber(string number)
+    {
+        string formattedNumber = number.Replace("(", "<span style=\"color:darkorange;font-size:small;\">(").Replace(")", ")</span>");
+        return new MarkupString(formattedNumber);
+    }
+    protected override async Task OnInitializedAsync()
+    {
+      
+       UpdateClickedBets();
+       
+    }
+    private void UpdateClickedBets()
+    {
+        foreach (var category in DebtList)
+        {
+            foreach (var tag in category.Tags)
+            {
+                if (tag.Bet1?.IsClicked == true)
+                {
+                    tag.Bet1.IsClicked = false; // Reset the IsClicked property
+                }
+
+                if (tag.Bet2?.IsClicked == true)
+                {
+                    tag.Bet2.IsClicked = false; // Reset the IsClicked property
+                }
+
+                if (tag.BetX?.IsClicked == true)
+                {
+                    tag.BetX.IsClicked = false; // Reset the IsClicked property
+                }
+            }
+        }
+    }
+    private void HandleButtonClick(int buttonIndex, TelesportCategory context, TelesportBet tag, string bet)
+    {
+        if (tag.EligibleBet) // not yet started
+        {
+
+            Game = tag.Description;
+            Game2 = tag.Description2;
+            Info = tag.Note;
+            GameNo = tag.Number;
+            Type = tag.Type;
+            switch (buttonIndex)
+            {
+                case 1:
+                    if (!tag.Bet2.IsClicked)
+                    {
+                        tag.Bet2.IsClicked = true;
+                        tag.BetX.IsClicked = false;
+                        tag.Bet1.IsClicked = false;
+                        BetRatio = tag.Bet2.Data1X2;
+                        Bet1X2 = "2";
+                    }
+                    else
+                        tag.Bet2.IsClicked = false;
+
+                    break;
+                case 2:
+                    if (!tag.Bet1.IsClicked)
+                    {
+                        tag.Bet1.IsClicked = true;
+                        tag.BetX.IsClicked = false;
+                        tag.Bet2.IsClicked = false;
+                        BetRatio = tag.Bet1.Data1X2;
+                        Bet1X2 = "1";
+                    }
+                    else
+                        tag.Bet1.IsClicked = false;
+                    break;
+                case 0:
+                    if (!tag.BetX.IsClicked)
+                    {
+                        tag.BetX.IsClicked = true;
+                        tag.Bet1.IsClicked = false;
+                        tag.Bet2.IsClicked = false;
+                        BetRatio = tag.BetX.Data1X2;
+                        Bet1X2 = "X";
+                    }
+                    else
+                        tag.BetX.IsClicked = false;
+                    break;
+                default:
+                    Bet1X2 = "";
+                    break;
+            }
+
+            // Pass up to add to gambling form
+            if(Bet1X2 != null)
+            {
+                var newBet = new BetList { GameNo = GameNo, Bet1X2 = Bet1X2, BetRatio = decimal.Parse(BetRatio), Game = Game, Game2 = Game2, Type = Type, ClickedButton = buttonIndex, Info = Info};
+                AddNewBet(newBet);
+            }
+            
+        }
+
+        // Force a re-render of the table
+        StateHasChanged();
+    }
+    private String GetButtonColor(int buttonIndex, TelesportCategory context, TelesportBet tag)
+    {
+        if (tag.EligibleBet) // not yet started
+        {
+            switch (buttonIndex)
+            {
+                case 1:
+                    if (tag.Bet2.IsClicked)
+                    {
+                        return @"background-color: coral;  ";
+                    }
+                    else
+                    {
+                        return @"background-color: lavender;  ";
+                    }
+                  
+                case 0:
+                    if (tag.BetX.IsClicked)
+                    {
+                        return @"background-color: coral;  ";
+                    }
+                    else
+                    {
+                        return @"background-color: lavender;  ";
+                    }
+                case 2:
+                    if (tag.Bet1.IsClicked)
+                    {
+                        return @"background-color: coral;  ";
+                    }
+                    else
+                    {
+                        return @"background-color: lavender;  ";
+                    }
+                default:
+                    return @"background-color: lavender;";
+                    
+            }
+
+        }
+        if (buttonIndex == 2) // bet 1 win
+            if (tag.Bet1.IsWon)
+                return @"background-color: lightgray;  ";
+            else
+                return @"background-color: lavender;  ";
+        if (buttonIndex == 0) // bet X win
+            if (tag.BetX.IsWon)
+                return @"background-color: lightgray;  ";
+            else
+                return @"background-color: lavender;  ";
+        if (buttonIndex == 1 || tag.BetX.Data1X2 != "") // bet 2 win
+            if (tag.Bet2.IsWon)
+                return @"background-color: lightgray;  ";
+            else
+                return @"background-color: lavender;  ";
+
+        return @"background-color: lavender;  ";
+    }
+
+
+
+    public void AddNewBet(BetList newBet)
+    {
+        // Find the index of the item with the specified ID
+        int index = MyList.FindIndex(bet => bet.GameNo == newBet.GameNo);
+        // If the item was found, remove it from the list
+        if (index >= 0)
+        {
+            var betToRemove = MyList[index];
+            MyList.RemoveAt(index);
+            if (betToRemove.Bet1X2 != newBet.Bet1X2)// if the same key was pressed this bet cancled
+            {
+                // Add the new bet
+                MyList.Add(newBet);
+            }
+            else
+            {
+                if (newBet.Type.Contains("S"))
+                    count_S--;
+                if (newBet.Type.Contains("D"))
+                    count_D--;
+                count_T--;
+            }
+        }
+        else
+        {
+            // Add the new bet first time
+            MyList.Add(newBet);
+            if (newBet.Type.Contains("S"))
+                count_S++;
+            if (newBet.Type.Contains("D"))
+                count_D++;
+            count_T++;
+        }
+
+    }
+    private async Task RefreshData()
+    {
+        await OnRefresh.InvokeAsync(ActivePanel); 
+
+    }
+
+    void HandleReturn()
+    {
+        myShow = true;
+        OnMyShowChanged.InvokeAsync(myShow);
+        StateHasChanged();
+    }
+
+    void Search()
+    {
+        found = false;
+      
+    }
+
+    private async Task ChangeMyShow()
+    {
+        myShow = false;
+        await OnMyShowChanged.InvokeAsync(myShow);
+    }
+    private List<TelesportCategory> InitializeCategories(List<TelesportCategory> categories)
+    {
+        var initializedCategories = new List<TelesportCategory>();
+
+        foreach (var category in categories)
+        {
+            var initializedTags = new List<TelesportBet>();
+
+            foreach (var tag in category.Tags)
+            {
+                var initializedTag = new TelesportBet
+                    {
+                        Number = tag.Number,
+                        Active = tag.Active,
+                        Status = tag.Status,
+                        Description = tag.Description,
+                        Type = tag.Type,
+                        Bet1 = new ButtonBet { IsClicked = false }, // Initialize here
+                        BetX = new ButtonBet { IsClicked = false }, // Initialize here
+                        Bet2 = new ButtonBet { IsClicked = false } // Initialize here
+                                                                   // ... initialize other properties
+                    };
+
+                initializedTags.Add(initializedTag);
+            }
+
+            var initializedCategory = new TelesportCategory
+                {
+                    Name = category.Name,
+                    Tags = initializedTags
+                };
+
+            initializedCategories.Add(initializedCategory);
+        }
+
+        return initializedCategories;
+    }
+}
+

@@ -1,0 +1,101 @@
+﻿
+@using BetModels.Models
+@using BetModels.Interfaces
+@using MudBlazor
+@using System.Text.RegularExpressions;
+@using RazorClassLibraryModels.Models;
+@inject IScarp scarp
+
+<MudTabs Class="tabs-classname" @ref="tabs" >
+    <MudTabPanel Disabled="@(!myShow)" Text="הכל" @ref="panelAll" Style="background-color:white;border-radius: 5px; text-align:center; ">
+        <TelesportTable3 OnMyShowChanged="HandleMyShowChanged" OnRefresh="@((arg) => RefreshData(panelAll))" DebtList="@debtList" ActivePanel="@panelAll" />
+    </MudTabPanel>
+  
+    <MudTabPanel Disabled="@(!myShow)" Text="טרם" @ref="panelNotYet" Style="background-color:white;  border-radius: 5px; text-align:center">
+        <TelesportTable3 OnMyShowChanged="HandleMyShowChanged" OnRefresh="@((arg) => RefreshData(panelNotYet))"
+            DebtList="@debtList.Select(category => 
+            new TelesportCategory {Name = category.Name, ImgFlag = category.ImgFlag, Tags = category.Tags.Where(tag => tag.EligibleBet).ToList()}).Where(category => category.Tags.Any()).ToList()"
+                         ActivePanel="@panelNotYet" />
+        
+    </MudTabPanel>
+      
+    <MudTabPanel Disabled="@(!myShow)" Text="חי" @ref="panelLive" Style="background-color:white;   border-radius: 5px; text-align:center">
+        <TelesportTable3 OnMyShowChanged="HandleMyShowChanged" OnRefresh="@((arg) => RefreshData(panelLive))" DebtList="@debtList.Select(category =>
+            new TelesportCategory {Name = category.Name, ImgFlag = category.ImgFlag, Tags = category.Tags.Where(tag => tag.Active).ToList()}).Where(category => category.Tags.Any()).ToList()"
+                         ActivePanel="@panelLive" />
+    </MudTabPanel>
+   
+    <MudTabPanel Disabled="@(!myShow)" Text="הסתיימו" @ref="panelFinished" Style="background-color:white;   border-radius: 5px; text-align:center">
+        <TelesportTable3 OnMyShowChanged="HandleMyShowChanged" OnRefresh="@((arg) => RefreshData(panelFinished))" DebtList="@debtList.Select(category =>
+            new TelesportCategory {Name = category.Name, ImgFlag = category.ImgFlag, Tags = category.Tags.Where(tag => tag.Status=="הסתיים").ToList()}).Where(category => category.Tags.Any()).ToList()"
+                         ActivePanel="@panelLive" />
+    </MudTabPanel>
+  
+    <MudTabPanel  Disabled="@(!myShow)" Text="ענפים" @ref="panelCategory" Style="background-color: white; border-radius: 5px; text-align:center">
+        <MudSelect Label="בחר ענף" MultiSelection="true" T="string" @bind-Value="value" @bind-SelectedValues="@selectedNames">
+            @foreach (var name in namesCategorytList)
+            { 
+                <MudSelectItem Value="@name">@name</MudSelectItem>
+            }
+        </MudSelect>
+        
+        <TelesportTable3 OnMyShowChanged="HandleMyShowChanged" OnRefresh="@((arg) => RefreshData(panelCategory))" DebtList="@debtList.Where(category => @selectedNames.Contains(category.Name)).ToList()" ActivePanel="@panelCategory" />
+    </MudTabPanel>
+    <!-- Add more MudTabs here for other categories -->
+    
+ </MudTabs>
+
+<style>
+
+    .mud-tab-panel {
+        position: fixed;
+        top: 0;
+      
+        z-index: 2;
+        
+    }
+
+    /* Style the active tab */
+    .tabs-classname .mud-tabs-toolbar .mud-tooltip-root .mud-tab-active {
+      
+    }
+</style>
+@code {
+    public bool myShow = true;
+    MudTabs tabs;
+    private MudTabPanel panelAll;
+    private MudTabPanel panelLive;
+    private MudTabPanel panelNotYet;
+    private MudTabPanel panelCategory;
+    private MudTabPanel activePanel; // Track active panel
+    private MudTabPanel panelFinished;
+    private string value { get; set; } = "Nothing selected";
+    public List<string> namesCategorytList = new List<string>();
+    public List<TelesportCategory> debtList = new List<TelesportCategory>();
+    IEnumerable<string> selectedNames = new List<string>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        debtList = await scarp.ScarpAsync();
+        namesCategorytList = debtList
+           .Select(category => category.Name)
+           .Distinct()
+           .OrderBy(name => name)
+           .ToList();
+    }
+    private async Task RefreshData(MudTabPanel panelActive)
+    {
+        debtList.Clear();
+        debtList = await scarp.ScarpAsync();
+        StateHasChanged();
+        activePanel = panelActive; // Update the active panel to the desired one
+        tabs.ActivatePanel(activePanel);
+    }
+
+    private async Task HandleMyShowChanged(bool newValue=true)
+    {
+        myShow = newValue; // Update myShow when the event is raised
+                           // Optionally, you can perform additional logic here based on the new value.
+    }
+    
+}

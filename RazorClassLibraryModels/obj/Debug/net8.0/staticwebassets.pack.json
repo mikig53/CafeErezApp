@@ -1,0 +1,33 @@
+{
+  "Files": [
+    {
+      "Id": "D:\\source\\repos\\MauiWinnerApp\\RazorClassLibraryModels\\obj\\Debug\\net8.0\\scopedcss\\projectbundle\\RazorClassLibraryModels.bundle.scp.css",
+      "PackagePath": "staticwebassets\\RazorClassLibraryModels.bundle.scp.css"
+    },
+    {
+      "Id": "D:\\source\\repos\\MauiWinnerApp\\RazorClassLibraryModels\\wwwroot\\background.png",
+      "PackagePath": "staticwebassets\\background.png"
+    },
+    {
+      "Id": "D:\\source\\repos\\MauiWinnerApp\\RazorClassLibraryModels\\wwwroot\\exampleJsInterop.js",
+      "PackagePath": "staticwebassets\\exampleJsInterop.js"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.RazorClassLibraryModels.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.RazorClassLibraryModels.props",
+      "PackagePath": "build\\RazorClassLibraryModels.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.RazorClassLibraryModels.props",
+      "PackagePath": "buildMultiTargeting\\RazorClassLibraryModels.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.RazorClassLibraryModels.props",
+      "PackagePath": "buildTransitive\\RazorClassLibraryModels.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

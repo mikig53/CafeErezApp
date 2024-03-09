@@ -1,0 +1,416 @@
+﻿
+@using System.ComponentModel.DataAnnotations;
+@using BetModels.Interfaces;
+@using BetModels.Models;
+@using Microsoft.AspNetCore.Components.Forms
+@using RazorClassLibraryModels.Models;
+@using MudBlazor
+@inject ITextService textGenerationService
+@inject IPreferencesService preferencesService
+@inject IFormSender FormSender
+@inject ISnackbar Snackbar
+<h1>טופס הימורים</h1>
+
+<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudPaper Style="background-color:antiquewhite">
+    <MudStack Row="true">
+            <MudTextField Label="שם פרטי" @bind-Value="model.Firstname" For="@(() => model.Firstname)" />
+            <MudTextField Label="שם משפחה" @bind-Value="model.Lastname" For="@(() => model.Lastname)" />
+            <MudTextField Label="מס' טלפון" @bind-Value="model.TelephoneNumber" For="@(() => model.TelephoneNumber)" />
+    </MudStack>
+        
+    <MudTable Items="@MyList.OrderByDescending(tag => single[MyList.IndexOf(tag)])" Striped="true">
+            
+            <RowTemplate Context="tag">
+                <MudIconButton OnClick="@(() => DeleteNewBet(tag, MyList.IndexOf(tag)))" Icon="@Icons.Material.Filled.Delete" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" />
+                <MudTd>
+                    
+                        <MudGrid Style="@GetRowColor(tag)">
+                            <MudItem xs="4">
+                            <MudText Style="font-size:xx-small">@tag.BetRatio יחס</MudText>
+                                @if(tag.Type.Contains("S"))
+                                {
+                                    <MudCheckBox T="bool" Checked="@single[MyList.IndexOf(tag)]"
+                                             CheckedChanged="@(value => OnCheckboxValueChanged(value, tag))"
+                                             Size="Size.Small" Color="Color.Default"></MudCheckBox>
+                                    <span Style="font-size:xx-small">סינגל</span>
+                               
+                                }
+                            
+                            </MudItem>
+                            <MudItem xs="4">
+
+                                <span style="@GetButtonColor("2", tag)">|2|</span>
+                                <span style="@GetButtonColor("X", tag)">|X|</span>
+                                <span style="@GetButtonColor("1", tag)">|1|</span>
+                               <span style="font-size:xx-small">בחירה</span>
+                            
+                            </MudItem>
+
+                        <MudText Style="font-size:xx-small">@tag.GameNo מס. משחק</MudText>
+                        <MudItem xs="12">
+                        <MudStack Row="true" Justify=Justify.FlexEnd>
+                                <MudText Style="font-size:xx-small;background-color: yellowgreen;">@tag.Info</MudText>
+                                  <MudText Style="font-size:xx-small">@tag.Game2</MudText>
+                                @if (tag.Game2.Length > 0)
+                                {
+                                    <b>-</b>      
+                                }
+                                    <MudText Style="font-size:xx-small">@tag.Game</MudText>
+                            </MudStack>
+                        </MudItem>
+                           
+                        </MudGrid>
+                 
+                </MudTd>
+                @if (@single[MyList.IndexOf(tag)])
+                {
+                    <MudNumericField T="int" Min="10" Step="10" Value=@singleAmount[MyList.IndexOf(tag)] ValueChanged="@((int args) => OnSingleValueChanged(args, tag))"
+                                     Label="₪:סכום ההימור שלך" Variant="Variant.Filled" Immediate="true" />
+                }
+                
+
+
+
+            </RowTemplate>
+    </MudTable>
+   
+</MudPaper>
+
+@if (MyList.Count() > 0)
+{
+    <MudPaper>
+        <MudForm Style="font-size:small; line-height:1em; text-align:end; background-color:lavender">
+            <MudNumericField T="int" Min="10" Step="10" Value=@betAmount ValueChanged="@((int args) => HandleValueChanged(args))" Label="₪:סכום ההימור שלך " Variant="Variant.Filled" Immediate="true" />
+            <MudTextField @bind-Value="totalWinRatio" ReadOnly="true" Label=":יחס הזכיה הכולל" Format="F2" />
+            <MudTextField @bind-Value="winAmount" ReadOnly="true" Label="₪:סכום הזכיה הצפוי" Format="F2" />
+        </MudForm>
+        <link href="https://use.fontawesome.com/releases/v5.14.0/css/all.css" rel="stylesheet">
+        <MudPaper Height="30px" >
+                <MudIconButton ButtonType="ButtonType.Submit" Disabled="@(!CheckCombination())" Icon="fas fa-solid fa-share fa-fade fa-2xs" Class="ml-auto"
+                               Style="height:10px; background-color:darkorchid">שלח טופס</MudIconButton>
+            <MudText Typo="Typo.overline" Color="Color.Info">שלח טופס לקפה ארז</MudText> <MudText Typo="Typo.overline" Color="Color.Warning">@message</MudText>
+        </MudPaper>
+    </MudPaper>
+
+}
+</EditForm>
+<p></p>
+<MudButton Variant="Variant.Filled" @onclick="Return" Size="Size.Small"
+                    EndIcon="@Icons.Material.Filled.ArrowBack" Style="background-color: yellowgreen;">חזור</MudButton>
+@code {
+    [Parameter]
+    public List<BetList>? MyList { get; set; }
+    [Parameter]
+    public Action OnReturn { get; set; }
+    [Parameter]
+    public List<TelesportCategory> ActiveIndexes { get; set; }
+    [RegularExpression(@"^\d+$", ErrorMessage = "הקש מספרים בלבד")]
+    private int betAmount = 10;
+    private decimal totalWinRatio = 1;
+    private decimal winAmount;
+    private string message { get; set; }
+    public bool[] single; 
+    public int[] singleAmount;
+    TelesportForm model = new TelesportForm();
+    bool success;
+
+    public class TelesportForm
+    {
+        [Required(ErrorMessage = "חובה להקיש שם פרטי")]
+        public string Firstname { get; set; }
+        [Required(ErrorMessage = "חובה להקיש שם משפחה")]
+        public string Lastname { get; set; }
+        [Required(ErrorMessage = "חובה להקיש מס' טלפון")]
+        [RegularExpression(@"^\d{10}", ErrorMessage = "הקש 10 ספרות")]
+        public string TelephoneNumber { get; set; }
+    }
+    private void OnValidSubmit(EditContext context)
+    {
+        success = true;
+        StateHasChanged();
+        FormSend();
+    }
+
+    protected override void OnInitialized()
+    {
+        single = new bool[MyList.Count];
+        singleAmount = new int[MyList.Count];
+        // Get values from Preferences and populate the form
+        model.Firstname = preferencesService.Get("first_name", "Unknown");
+        model.Lastname = preferencesService.Get("last_name", "Unknown");
+        model.TelephoneNumber = preferencesService.Get("telephoneNumber", "Unknown");
+
+        foreach (var bet in MyList)
+        {
+            totalWinRatio *= bet.BetRatio;
+
+        }
+        winAmount = totalWinRatio * betAmount;
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            for (int i = 0; i < singleAmount.Length; i++)
+            {
+                singleAmount[i] = betAmount;
+            }
+
+            StateHasChanged();
+        }
+    }
+    public void DeleteNewBet(BetList newBet, int index)
+    {
+        // Find the index of the item with the specified ID
+        // int index = MyList.FindIndex(bet => bet.GameNo == newBet.GameNo);
+        // If the item was found, remove it from the list
+        if (index >= 0)
+        {
+            var betToRemove = MyList[index];
+            MyList.RemoveAt(index);
+            if (!single[index]) // not single
+            {
+                totalWinRatio /= betToRemove.BetRatio;
+
+            }
+
+            winAmount = CheckTotalWin(newBet); ;
+
+
+            // turnoff the highlighted bet of game No
+            HandleDelButtonClick(newBet.GameNo, newBet.ClickedButton);
+        }
+
+
+        StateHasChanged();
+
+    }
+    private void HandleValueChanged(int value)
+    {
+        // do something with the new value
+        betAmount = value;
+        winAmount = betAmount * totalWinRatio;
+        StateHasChanged();
+    }
+    void Return()
+    {
+        OnReturn?.Invoke(); // Call the action
+    }
+
+    public void HandleDelButtonClick(string betNumber, int clickedButton)
+    {
+        TelesportBet tag = ActiveIndexes
+    .SelectMany(category => category.Tags)
+    .FirstOrDefault(bet => bet.Number == betNumber);
+
+        if (tag != null)
+        {
+            switch (clickedButton)
+            {
+                case 1:
+
+                    tag.Bet2.IsClicked = false;
+
+                    break;
+                case 2:
+                    tag.Bet1.IsClicked = false;
+                    break;
+                case 0:
+                    tag.BetX.IsClicked = false;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+    }
+
+    private void OnCheckboxValueChanged(bool value, BetList tag)
+    {
+        single[MyList.IndexOf(tag)] = value;
+
+        if (!value)
+        {
+            singleAmount[MyList.IndexOf(tag)] = 10;
+            totalWinRatio *= tag.BetRatio;
+        }
+        else
+        {
+            totalWinRatio /= tag.BetRatio;
+        }
+        winAmount = CheckTotalWin(tag); 
+        StateHasChanged();
+    }
+    private void OnSingleValueChanged(int value, BetList tag)
+    {
+        singleAmount[MyList.IndexOf(tag)] = value;
+        winAmount = CheckTotalWin(tag); ;
+        StateHasChanged();
+    }
+    public async void FormSend()
+    {
+        if(success)
+        {
+            if(CheckCombination())
+            {
+                message = "connecting";
+                await Send();
+                success = false;
+            }
+            else
+            {
+                message = new string("הקומבינציה לא תקינה");// Handle send error
+                DisplayResult(message, Severity.Error);
+            }
+
+        }
+
+    }
+
+    public decimal CheckTotalWin(BetList tag)
+    {
+        decimal totWin = 0;
+        foreach (var row in MyList)
+        {
+            if (single[MyList.IndexOf(row)] == true) // foir singles
+                totWin += row.BetRatio * singleAmount[MyList.IndexOf(row)];
+        }
+        if (totalWinRatio > 1) // for combination
+            totWin += totalWinRatio * betAmount; 
+        return totWin;
+    }
+
+    public bool CheckCombination()
+    {
+        var count_S = 0;
+        var count_D = 0;
+        var count_T = 0;// total bets
+        foreach(var row in MyList)
+        {
+            if (single[MyList.IndexOf(row)] == false) // number of bets in combination
+            {
+                count_T++;
+                if (row.Type.Contains("S")) // number of S
+                    count_S++;
+                if (row.Type.Contains("D")) // number of D
+                    count_D++;
+            }
+        }
+        if ((count_T > 2 || count_T == 0 || count_D == 2 || count_S == 2 || (count_S == 1 && count_T == 1)))
+            return true;
+        else
+            return false;
+    }
+    public async Task Send()
+    {
+        var form = new Form();
+        form.FirstName = model.Firstname;
+        form.LastName = model.Lastname;
+        form.TelephoneNumber = model.TelephoneNumber;
+        form.BetAmount = betAmount;
+        foreach (var bet in MyList)
+        {
+            form.Bets.Add(new Bet
+                {
+                    GameNumber = bet.GameNo,
+                    BetValue = bet.Bet1X2,
+                    Ratio = bet.BetRatio.ToString(),
+                    DescriptionGame = bet.Game + "-" + bet.Game2,
+                    Single = single[MyList.IndexOf(bet)],
+                    SingleAmount = singleAmount[MyList.IndexOf(bet)],
+                    Info = bet.Info
+                });
+        }
+
+        try
+        {
+         //  await FormSender.SendForm(form);
+         await FormSender.SendForm(form);
+            message = new string("הטופס נשלח בהצלחה ");
+            DisplayResult(message, Severity.Success);
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(5000);
+            await textGenerationService.SaveAsTextAsync(form);
+            message = new string("הטופס נשמר בהצלחה ");
+            DisplayResult(message, Severity.Success);
+            await InvokeAsync(StateHasChanged);
+            ClearSentList();
+        }
+        catch (Exception ex)
+        {
+            message = new string("בעיה בתקשורת, תנסה מאוחר יותר");// Handle send error
+            DisplayResult(message, Severity.Error);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private String GetButtonColor(string winner,  BetList tag)
+    {
+
+        switch (winner)
+        {
+            case "1":
+                if (tag.Bet1X2 == "1")
+                {
+                    return @"background-color: coral; ";
+                }
+                else
+                {
+                    return @"background-color: lavender;";
+                }
+               
+            case "X":
+                if (tag.Bet1X2 == "X")
+                {
+                    return @"background-color: coral;";
+                }
+                else
+                {
+                    return @"background-color: lavender;";
+                }
+              
+            case "2":
+                if (tag.Bet1X2 == "2")
+                {
+                    return @"background-color: coral;";
+                }
+                else
+                {
+                    return @"background-color: lavender;";
+                }
+               
+            default:
+                return @"background-color: lavender;";
+                break;
+        }
+
+
+    }
+    private String GetRowColor(BetList tag)
+    {
+
+        if(MyList.IndexOf(tag) % 2 == 0)
+            return @"background-color: burlywood";
+                else
+            return @"background-color:beige";
+    }
+    // Clear the sent list and return back
+    void ClearSentList()
+    {
+        foreach (var bet in MyList)
+        {
+            HandleDelButtonClick(bet.GameNo, bet.ClickedButton);
+        }
+        MyList.Clear();
+        Return(); 
+    }
+    void DisplayResult(string message, Severity severity)
+    {
+        Snackbar.Clear();
+        Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomLeft;
+        Snackbar.Add(message, severity);
+    }
+   
+}
