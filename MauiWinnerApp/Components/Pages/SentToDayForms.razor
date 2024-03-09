@@ -1,0 +1,96 @@
+﻿          @page "/todayforms"
+@using BetModels.Interfaces
+@using BetModels.Models
+@inject ITextService textService
+<MudGrid class="table-container" >
+    <MudTable Items="@forms" Dense="true" Hover="true">
+         <RowTemplate>
+            <MudStack Row="true" Style="background-color:burlywood; font-size:xx-small">
+                <span>@context.ReceivedDate</span>
+                <MudText Style="font-size:x-small">₪ סכום המור" @context.BetAmount</MudText>
+                <MudText Style="font-size:x-small">טלפון @context.TelephoneNumber</MudText>
+                <MudText Style="font-size:x-small">שם משפחה @context.LastName</MudText>
+                <MudText Style="font-size:x-small">שם פרטי" @context.FirstName</MudText>
+                
+                
+               
+            </MudStack>
+                <MudTable Items="@context.Bets" Dense="true" Hover="true">
+                    <RowTemplate Context="tag">
+                    <MudStack Style="line-height: 0em" Spacing="0">
+                        <MudStack Row="true" Justify="Justify.FlexEnd" Style="text-right; line-height:0em">
+                           <MudTd Style="font-size:smaller; line-height: 0em">@tag.GameNumber .מספר משחק</MudTd>
+                        </MudStack>
+                        <MudTd Style="font-size:x-small;  ">
+                            @if (tag.Single)
+                            {
+                                <span>₪ @tag.SingleAmount</span>
+                                <span>סכום המור</span>
+                                <span>סינגל</span>
+                            }
+                            <span style="@GetButtonColor("2", tag)">|2|</span>
+                            <span style="@GetButtonColor("X", tag)">|X|</span>
+                            <span style="@GetButtonColor("1", tag)">|1|</span>
+                            
+                            @tag.DescriptionGame
+                            @tag.Info
+                        </MudTd>
+                    </MudStack>
+                    </RowTemplate>
+                </MudTable>
+          </RowTemplate>
+    </MudTable>
+</MudGrid>
+@code {
+    List<Form> forms = new List<Form>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        forms = await textService.ReadAsTextAsync();
+       
+    }
+
+    private String GetButtonColor(string winner, Bet tag)
+    {
+
+        switch (winner)
+        {
+            case "1":
+                if (tag.BetValue == "1")
+                {
+                    return @"background-color: coral; ";
+                }
+                else
+                {
+                    return @"background-color: lavender;";
+                }
+              
+            case "X":
+                if (tag.BetValue == "X")
+                {
+                    return @"background-color: coral;";
+                }
+                else
+                {
+                    return @"background-color: lavender;";
+                }
+                
+            case "2":
+                if (tag.BetValue == "2")
+                {
+                    return @"background-color: coral;";
+                }
+                else
+                {
+                    return @"background-color: lavender;";
+                }
+                
+            default:
+                return @"background-color: lavender;";
+                
+        }
+
+
+    }
+
+}

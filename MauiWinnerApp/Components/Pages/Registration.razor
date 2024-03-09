@@ -1,0 +1,102 @@
+﻿<h3>Registration</h3>
+
+
+@using System.ComponentModel.DataAnnotations
+@using System.Text;
+@using System.Reflection;
+@using BetModels.Interfaces
+@using CommunityToolkit.Maui.Alerts;
+@using CommunityToolkit.Maui.Storage;
+@inject IPreferencesService preferencesService
+@if(isRegistrated)
+{
+    <p>המשתמש רשום</p>
+}
+<EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator />
+    <MudGrid>
+        <MudItem xs="12" sm="7">
+            <MudCard>
+                <MudCardContent>
+                    <MudTextField Label="שם פרטי" @bind-Value="model.Firstname" For="@(() => model.Firstname)" />
+                    <MudTextField Label="שם משפחה" @bind-Value="model.Lastname" For="@(() => model.Lastname)" />
+                    <MudTextField Label="מס' טלפון" @bind-Value="model.TelephoneNumber" For="@(() => model.TelephoneNumber)" />
+                </MudCardContent>
+                <MudCardActions>
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Class="ml-auto">Register</MudButton>
+                </MudCardActions>
+            </MudCard>
+        </MudItem>
+        <MudItem xs="12" sm="5">
+            <MudPaper Class="pa-4 mud-height-full">
+                <MudText Typo="Typo.subtitle2">Validation Summary</MudText>
+                @if (success)
+                {
+                    <MudText Color="Color.Success">Success</MudText>
+                }
+                else
+                {
+                    <MudText Color="@Color.Error">
+                        <ValidationSummary />
+                    </MudText>
+                }
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12">
+            <MudText Typo="Typo.body2" Align="Align.Center">
+                Fill out the form correctly to see the success message.
+            </MudText>
+        </MudItem>
+    </MudGrid>
+</EditForm>
+@code {
+    RegisterForm model = new RegisterForm();
+    bool success;
+    bool isRegistrated; 
+    public class RegisterForm
+    {
+        [Required(ErrorMessage = "חובה להקיש שם פרטי")]
+        public string Firstname { get; set; }
+        [Required(ErrorMessage = "חובה להקיש שם משפחה")]
+        public string Lastname { get; set; }
+        [Required(ErrorMessage = "חובה להקיש מס' טלפון")]
+        [RegularExpression(@"^\d{10}$", ErrorMessage = "הקש 10 ספרות")]
+        public string TelephoneNumber { get; set; }
+
+    }
+
+
+
+    protected override  async Task OnInitializedAsync()
+    {
+
+        // Get values from Preferences and populate the form
+        model.Firstname = preferencesService.Get("first_name", "Unknown");
+        model.Lastname = preferencesService.Get("last_name", "Unknown");
+        model.TelephoneNumber = preferencesService.Get("telephoneNumber", "Unknown");
+
+    }
+
+    private void OnValidSubmit(EditContext context)
+    {
+        success = true;
+
+        HandleValidSubmit();
+        isRegistrated = true;
+        StateHasChanged();
+    }
+
+    private async Task HandleValidSubmit()
+    {
+
+
+        // Update the values in the Preferences
+        preferencesService.Set("first_name", model.Firstname);
+        preferencesService.Set("last_name", model.Lastname);
+        preferencesService.Set("telephoneNumber", model.TelephoneNumber);
+        
+
+    }
+    
+
+}
